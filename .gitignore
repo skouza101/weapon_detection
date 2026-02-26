@@ -1,0 +1,32 @@
+# Common
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+*.db
+*.log
+
+# Models & Weights (Very Large)
+backend/best.pt
+backend/model/
+backend/runs/
+/tmp/Ultralytics/
+
+# Node.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Docker
+.dockerignore

@@ -1,0 +1,46 @@
+services:
+  # ─── FastAPI Backend (AI Service) ────────────────────────────
+  backend:
+    build: ./backend
+    container_name: weaponguard-backend
+    ports:
+      - "8000:8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      # Mount source code for hot-reloading
+      - ./backend:/app
+      # Persist Ultralytics cache inside WSL2
+      - ultralytics_cache:/tmp/Ultralytics
+    environment:
+      - MODEL_PATH=/app/best.pt
+      - YOLO_CONFIG_DIR=/tmp/Ultralytics
+      - DB_PATH=/app/weaponguard.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─── Next.js Frontend (Web Interface) ───────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: weaponguard-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  ultralytics_cache:
