@@ -124,6 +124,11 @@ class AuthRequest(BaseModel):
     email: str
     password: str
 
+class Base64FrameRequest(BaseModel):
+    image: str # Base64 encoded image string
+    confidence: float = 0.5
+    user_id: Optional[str] = None
+
 # ─── Auth Endpoints ────────────────────────────────────────
 @app.post("/auth/register")
 def register(req: AuthRequest):
@@ -255,6 +260,32 @@ async def detect(
         return await _detect_image(yolo, contents, filename, confidence, user_id)
     else:
         return await _detect_video(yolo, contents, filename, confidence, user_id)
+
+@app.post("/detect_frame")
+async def detect_frame_endpoint(req: Base64FrameRequest):
+    try:
+        # Remove data:image/jpeg;base64, prefix if present
+        b64_data = req.image
+        if "," in b64_data:
+            b64_data = b64_data.split(",")[1]
+            
+        image_data = base64.b64decode(b64_data)
+        image = Image.open(io.BytesIO(image_data)).convert("RGB")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid base64 image: {e}")
+
+    yolo = get_model()
+    # detect_frame is the helper function already defined that returns (detections, annotated_frame)
+    detection_list, _ = detect_frame(yolo, np.array(image), req.confidence)
+    
+    # We purposefully do not save live frames to DB to avoid spamming the DB,
+    # unless we want to track every single frame. Let's just return the bounding boxes.
+    
+    return JSONResponse(content={
+        "success": True,
+        "detections": detection_list,
+        "timestamp": datetime.utcnow().isoformat()
+    })
 
 # ─── Image Processing ───────────────────────────────────────
 async def _detect_image(yolo, contents, filename, confidence, user_id=None):
@@ -535,3 +566,84 @@ async def get_history(user_id: Optional[str] = Query(None)):
     except Exception as e:
         print(f"❌ History Error: {e}")
         return []
+
+# ─── Analytics ───────────────────────────────────────────────
+@app.get("/stats")
+async def get_stats(user_id: Optional[str] = Query(None)):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        # 1. Timeline data (last 7 days detection counts)
+        # Using SQLite date functions to group by date
+        if user_id:
+            cursor.execute('''
+                SELECT date(timestamp) as date_val, COUNT(*) as count
+                FROM detections
+                WHERE user_id = ? AND timestamp >= date('now', '-7 days')
+                GROUP BY date_val
+                ORDER BY date_val ASC
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT date(timestamp) as date_val, COUNT(*) as count
+                FROM detections
+                WHERE timestamp >= date('now', '-7 days')
+                GROUP BY date_val
+                ORDER BY date_val ASC
+            ''')
+            
+        timeline_rows = cursor.fetchall()
+        timeline_data = [{"date": r["date_val"], "count": r["count"]} for r in timeline_rows]
+        
+        # 2. Weapon types distribution
+        if user_id:
+            cursor.execute('''
+                SELECT detections_json 
+                FROM detections 
+                WHERE user_id = ?
+            ''', (user_id,))
+        else:
+            cursor.execute('SELECT detections_json FROM detections')
+            
+        all_detections_json = cursor.fetchall()
+        weapon_counts = {}
+        
+        for row in all_detections_json:
+            if not row['detections_json']:
+                continue
+            try:
+                dets = json.loads(row['detections_json'])
+                for d in dets:
+                    wtype = d.get('class_name', 'Unknown')
+                    weapon_counts[wtype] = weapon_counts.get(wtype, 0) + 1
+            except Exception:
+                pass
+                
+        weapon_distribution = [{"name": k, "value": v} for k, v in weapon_counts.items()]
+        
+        # 3. Quick Summary Stats
+        if user_id:
+            cursor.execute('SELECT COUNT(*) as total FROM detections WHERE user_id = ?', (user_id,))
+            total_scans = cursor.fetchone()["total"]
+        else:
+            cursor.execute('SELECT COUNT(*) as total FROM detections')
+            total_scans = cursor.fetchone()["total"]
+            
+        total_threats = sum(weapon_counts.values())
+        
+        conn.close()
+        
+        return {
+            "timeline": timeline_data,
+            "distribution": weapon_distribution,
+            "summary": {
+                "total_scans": total_scans,
+                "total_threats": total_threats
+            }
+        }
+    except Exception as e:
+        print(f"❌ Stats Error: {e}")
+        return {"timeline": [], "distribution": [], "summary": {"total_scans": 0, "total_threats": 0}}
+

@@ -290,44 +290,6 @@ export default function HistoryPage() {
         />
       </div>
 
-      {/* ── Header ──────────────────────────────────────────── */}
-      <header className="border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-accent-secondary)] flex items-center justify-center text-black">
-              <IconShield />
-            </div>
-            <div>
-              <h1 className="text-sm font-bold tracking-[0.2em] uppercase leading-none">
-                WeaponGuard
-                <span className="text-[var(--color-accent-secondary)] ml-1">
-                  AI
-                </span>
-              </h1>
-              <p className="text-[9px] text-[var(--color-text-dim)] tracking-[0.3em] uppercase">
-                Système de Détection de Menaces
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-[10px] tracking-widest uppercase text-[var(--color-text-dim)] hover:text-[var(--color-accent-secondary)] transition-colors border border-[var(--color-border)] px-3 py-1.5 rounded hover:border-[var(--color-accent)]"
-            >
-              Accueil
-            </Link>
-            {!isLoggedIn && (
-              <Link
-                href="/login"
-                className="text-[10px] tracking-widest uppercase text-[var(--color-text-dim)] hover:text-[var(--color-accent-secondary)] transition-colors border border-[var(--color-border)] px-3 py-1.5 rounded hover:border-[var(--color-accent)]"
-              >
-                Connexion
-              </Link>
-            )}
-          </div>
-        </div>
-      </header>
-
       {/* ── Main ────────────────────────────────────────────── */}
       <main className="flex-grow max-w-[1440px] mx-auto px-4 sm:px-6 py-8 w-full">
         {/* Title row */}
