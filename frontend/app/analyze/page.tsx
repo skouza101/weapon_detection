@@ -205,7 +205,7 @@ export default function HomePage() {
   const [dragging, setDragging] = useState(false);
   const [confidence, setConfidence] = useState(0.5);
   const [analysisTime, setAnalysisTime] = useState<number | null>(null);
-  const [systemTime, setSystemTime] = useState(getTimestamp());
+  const [systemTime, setSystemTime] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth guard: redirect to /login if not logged in
@@ -217,6 +217,7 @@ export default function HomePage() {
       setTimeout(() => router.replace("/login"), 1500);
     } else {
       setIsLoggedIn(true);
+      setSystemTime(getTimestamp());
     }
   }, [router]);
 

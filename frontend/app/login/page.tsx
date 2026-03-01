@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import PartnerCornerCards from "@/components/PartnerCornerCards";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -60,10 +61,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md glass-card p-8 space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold font-mono tracking-wider uppercase">
-            TacticalOps{" "}
-            <span className="bg-gradient-to-r from-[var(--color-accent-secondary)] to-[var(--color-accent)] bg-clip-text text-transparent">
-              CONNEXION
-            </span>
+            CONNEXION
           </h1>
           <p className="text-xs text-[var(--color-accent)]/60 font-mono tracking-widest uppercase">
             SYSTÈME DE CONTRÔLE D'ACCÈS
@@ -92,7 +90,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-3 rounded-sm bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-main)] focus:border-[var(--color-accent)] outline-none transition-colors font-mono"
-              placeholder="OPERATEUR@TAC-OPS.MIL"
+              placeholder="OPERATEUR@EMAIL.COM"
             />
           </div>
 
@@ -115,7 +113,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-4 rounded-md bg-gradient-to-r from-[var(--color-bg-card)] to-[var(--color-border)] border border-[var(--color-border-active)] font-bold font-mono tracking-widest text-[var(--color-text-main)] hover:shadow-lg hover:shadow-[var(--color-bg-card)]/50 transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? "AUTHENTIFICATION..." : "INITIALISER SESSION"}
+            {loading ? "AUTHENTIFICATION..." : "CONNEXION"}
           </button>
         </form>
 
@@ -134,8 +132,9 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
+      <PartnerCornerCards />
 
-      <footer className="mt-8 text-[10px] text-[var(--color-accent)]/30 font-mono tracking-widest uppercase">
+      <footer className="mt-6 text-[10px] text-[var(--color-accent)]/30 font-mono tracking-widest uppercase">
         TacticalOps SYS · Accès Restreint · MIL-STD-810
       </footer>
     </div>

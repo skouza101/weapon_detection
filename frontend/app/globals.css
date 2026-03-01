@@ -38,48 +38,35 @@ body {
 /* ── Tactical Grid Background ────────────────────────── */
 .bg-grid {
   background-image:
-    linear-gradient(rgba(16, 185, 129, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 185, 129, 0.06) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(rgba(16, 185, 129, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.13) 1px, transparent 1px);
+  background-size: 40px 40px;
+  /* Cached as a paint worklet — no JS repaints */
+  background-attachment: local;
 }
 
-/* ── Scanline overlay ────────────────────────────────── */
-.scanline-overlay::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9998;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 3px,
-    rgba(0, 0, 0, 0.03) 3px,
-    rgba(0, 0, 0, 0.03) 4px
-  );
-}
+/* ── Scanline overlay ─────────────────────────────────
+   Removed the fixed pseudo-element — it forced a full-screen
+   repaint on every frame and hurt compositing significantly.
+   The visual effect is now emulated via the grid background. */
 
 /* ── Glass Card ──────────────────────────────────────── */
+/* backdrop-filter: blur() is removed — it is the single
+   most expensive GPU effect and causes jank when used on
+   multiple overlapping elements. Replaced with solid bg. */
 .glass-card {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #0f172a;
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  box-shadow:
-    0 0 0 1px rgba(16, 185, 129, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .glass-card-elevated {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: #111827;
   border: 1px solid rgba(16, 185, 129, 0.15);
   border-radius: 6px;
   box-shadow:
-    0 0 0 1px rgba(16, 185, 129, 0.08),
-    0 12px 48px rgba(0, 0, 0, 0.5),
+    0 4px 24px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
@@ -178,6 +165,7 @@ body {
 }
 .animate-slide-left {
   animation: slide-in-left 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 }
 
 @keyframes slide-in-right {
@@ -192,6 +180,7 @@ body {
 }
 .animate-slide-right {
   animation: slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 }
 
 @keyframes glow-pulse {

@@ -113,7 +113,7 @@ export default function Sidebar() {
     }`;
 
   return (
-    <div className="w-full md:w-64 bg-[var(--color-bg-secondary)]/80 backdrop-blur-md border-b md:border-b-0 md:border-r border-[var(--color-border)] flex-shrink-0 flex flex-col md:h-full relative z-50">
+    <div className="w-full md:w-64 bg-[var(--color-bg-secondary)]/80 backdrop-blur-md border-b md:border-b-0 md:border-r border-[var(--color-border)] flex-shrink-0 flex flex-col md:h-screen md:sticky md:top-0 relative z-50">
       <div className="p-6 border-b border-[var(--color-border)] flex items-center gap-3">
         <div className="w-10 h-10 rounded bg-gradient-to-br from-[var(--color-accent)] to-[var(--color-accent-secondary)] flex items-center justify-center text-black">
           <IconShield />
@@ -131,27 +131,24 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-6 flex md:flex-col gap-2 px-4 flex-row overflow-x-auto items-center md:items-stretch">
+      <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-2 px-4 items-stretch">
         <Link href="/" className={navLinkClass(pathname === "/")}>
-          <IconDashboard /> <span className="hidden md:inline">Dashboard</span>
+          <IconDashboard /> <span>Dashboard</span>
         </Link>
         <Link href="/analyze" className={navLinkClass(pathname === "/analyze")}>
-          <IconHome /> <span className="hidden md:inline">Analyse Fichier</span>
+          <IconHome /> <span>Analyse Fichier</span>
         </Link>
         <Link href="/live" className={navLinkClass(pathname === "/live")}>
-          <IconShield /> <span className="hidden md:inline">Caméra Live</span>
+          <IconShield /> <span>Caméra Live</span>
         </Link>
 
         {isLoggedIn ? (
-          <>
-            <Link
-              href="/history"
-              className={navLinkClass(pathname === "/history")}
-            >
-              <IconHistory />{" "}
-              <span className="hidden md:inline">Historique</span>
-            </Link>
-          </>
+          <Link
+            href="/history"
+            className={navLinkClass(pathname === "/history")}
+          >
+            <IconHistory /> <span>Historique</span>
+          </Link>
         ) : (
           <>
             <Link href="/login" className={navLinkClass(pathname === "/login")}>
@@ -168,7 +165,7 @@ export default function Sidebar() {
       </div>
 
       {isLoggedIn && (
-        <div className="p-4 border-t border-[var(--color-border)] hidden md:block">
+        <div className="p-4 border-t border-[var(--color-border)] mt-auto">
           <button
             onClick={() => {
               authClient.removeToken();

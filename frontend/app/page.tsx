@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   XAxis,
@@ -14,13 +12,18 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
   Area,
   AreaChart,
+  RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
 } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -243,6 +246,80 @@ function AnimatedNumber({ value }: { value: number }) {
   return <>{display}</>;
 }
 
+/* ─── Shadcn-style half-circle RadialBar gauge ───────────── */
+function SemiCircleGauge({
+  data,
+}: {
+  data: { name: string; value: number }[];
+}) {
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
+
+  // Build chart config for shadcn ChartContainer
+  const chartConfig = data.reduce<ChartConfig>((acc, d, i) => {
+    acc[d.name] = { label: d.name, color: COLORS[i % COLORS.length] };
+    return acc;
+  }, {});
+
+  // Recharts RadialBar needs a `fill` property on each data item
+  const chartData = data.map((d, i) => ({
+    name: d.name,
+    value: d.value,
+    fill: COLORS[i % COLORS.length],
+  }));
+
+  return (
+    <div className="relative" style={{ height: 190 }}>
+      {/* Total label pinned to the bottom-center of the half circle */}
+      <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center pointer-events-none z-10">
+        <span
+          className="tabular-nums font-bold"
+          style={{
+            fontSize: 36,
+            lineHeight: 1,
+            color: "#f8fafc",
+            fontFamily: "monospace",
+          }}
+        >
+          {total}
+        </span>
+        <span
+          className="tracking-widest uppercase"
+          style={{
+            fontSize: 8,
+            color: "#64748b",
+            marginTop: 3,
+            fontFamily: "monospace",
+          }}
+        >
+          Menaces
+        </span>
+      </div>
+      <ChartContainer config={chartConfig} className="w-full h-full">
+        <RadialBarChart
+          data={chartData}
+          startAngle={180}
+          endAngle={0}
+          innerRadius={65}
+          outerRadius={130}
+          cx="50%"
+          cy="100%"
+        >
+          <PolarAngleAxis type="number" domain={[0, total]} tick={false} />
+          <RadialBar
+            dataKey="value"
+            background={{ fill: "#1e293b" }}
+            cornerRadius={6}
+          />
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent hideLabel nameKey="name" />}
+          />
+        </RadialBarChart>
+      </ChartContainer>
+    </div>
+  );
+}
+
 /* ─── KPI Card ───────────────────────────────────────────── */
 function KpiCard({
   label,
@@ -325,10 +402,12 @@ export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
-  const [systemTime, setSystemTime] = useState(getTimestamp());
+  const [systemTime, setSystemTime] = useState("");
+  const [mounted, setMounted] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<string | null>(null);
 
   useEffect(() => {
+    setMounted(true);
     const loggedIn = authClient.isLoggedIn();
     const email = authClient.getUserEmail();
     if (!loggedIn || !email) {
@@ -338,6 +417,7 @@ export default function DashboardPage() {
     }
     setIsLoggedIn(true);
     setUserEmail(email);
+    setSystemTime(getTimestamp());
   }, [router]);
 
   useEffect(() => {
@@ -396,25 +476,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--color-bg-primary)] bg-grid scanline-overlay text-[var(--color-text-main)] font-mono relative overflow-x-hidden">
-      {/* Ambient */}
-      <div className="fixed inset-0 pointer-events-none -z-10">
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full opacity-[0.04]"
-          style={{
-            background:
-              "radial-gradient(circle, var(--color-accent) 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute top-[5%] right-[10%] w-[400px] h-[400px] rounded-full opacity-[0.03]"
-          style={{
-            background:
-              "radial-gradient(circle, var(--color-danger) 0%, transparent 70%)",
-          }}
-        />
-      </div>
-
+    <div className="min-h-screen flex flex-col bg-[var(--color-bg-primary)] bg-grid text-[var(--color-text-main)] font-mono relative overflow-x-hidden">
       <main className="flex-grow max-w-[1440px] mx-auto px-4 sm:px-6 py-8 w-full space-y-6">
         {/* ── Header ───────────────────────────────── */}
         <div className="flex items-start justify-between animate-fade-up">
@@ -432,7 +494,7 @@ export default function DashboardPage() {
               </span>
             </h1>
             <p className="text-[10px] text-[var(--color-text-muted)] mt-1 capitalize">
-              {getDateDisplay()}
+              {mounted ? getDateDisplay() : ""}
             </p>
           </div>
 
@@ -607,26 +669,8 @@ export default function DashboardPage() {
                 </h3>
                 {stats.distribution.length > 0 ? (
                   <>
-                    <div className="h-44">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={stats.distribution}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={45}
-                            outerRadius={70}
-                            paddingAngle={4}
-                            dataKey="value"
-                          >
-                            {stats.distribution.map((_: any, i: number) => (
-                              <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip content={<CustomTooltip />} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
+                    {/* Pure SVG half-circle gauge — no Recharts */}
+                    <SemiCircleGauge data={stats.distribution} />
                     {/* Legend */}
                     <div className="mt-2 space-y-1.5">
                       {stats.distribution
@@ -789,7 +833,7 @@ export default function DashboardPage() {
                   <span>API: {API_URL}</span>
                 </div>
                 <div className="ml-auto font-bold text-[var(--color-text-main)] tabular-nums">
-                  {systemTime}
+                  {mounted ? systemTime : ""}
                 </div>
               </div>
             </div>
