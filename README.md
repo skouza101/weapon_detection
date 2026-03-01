@@ -199,4 +199,4 @@ Pour toute question ou problème, veuillez ouvrir une issue sur le dépôt GitHu
 
 ---
 
-**Développé avec ❤️ par WeaponGuard AI Team**
+**Développé avec ❤️ par Marwane Oraiche**
