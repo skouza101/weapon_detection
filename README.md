@@ -87,7 +87,7 @@ weapon_detection/
 
 1. **Cloner le dépôt**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/skouza101/weapon_detection.git
    cd weapon_detection
    ```
 
