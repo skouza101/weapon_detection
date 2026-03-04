@@ -17,7 +17,6 @@ ENV/
 *.log
 
 # Models & Weights (Very Large)
-backend/best.pt
 backend/model/
 backend/runs/
 /tmp/Ultralytics/
